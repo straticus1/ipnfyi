@@ -74,6 +74,8 @@ jspm_packages/
 *.bak
 *.backup
 *.sql
+!schema.sql
+!seed-data.sql
 
 # macOS
 .DS_Store
