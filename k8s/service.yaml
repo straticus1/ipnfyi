@@ -1,0 +1,48 @@
+---
+# HTTP API Service (for Ingress)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ipnfyi-api
+  namespace: ipnfyi
+  labels:
+    app: ipnfyi
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: ipnfyi
+
+---
+# DNS Service (LoadBalancer for external DNS queries)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ipnfyi-dns
+  namespace: ipnfyi
+  labels:
+    app: ipnfyi
+    service: dns
+  annotations:
+    # Oracle Cloud specific annotations
+    oci.oraclecloud.com/load-balancer-type: "lb"
+    service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 53
+    targetPort: 53
+    protocol: UDP
+    name: dns-udp
+  - port: 53
+    targetPort: 53
+    protocol: TCP
+    name: dns-tcp
+  selector:
+    app: ipnfyi

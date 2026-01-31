@@ -1,0 +1,73 @@
+# Optimized Alpine Dockerfile for ARM64/AMD64
+# Perfect for Oracle Cloud Free Tier Ampere A1 instances
+# Single container running both API and NSD
+
+FROM node:20-alpine
+
+# Install all dependencies
+RUN apk add --no-cache \
+    postgresql-client \
+    nsd \
+    curl \
+    bash \
+    supervisor
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install Node.js dependencies
+RUN npm ci --only=production
+
+# Copy application files
+COPY server.js .
+COPY ipnfyi-cli.js .
+COPY scripts/ ./scripts/
+COPY public/ ./public/
+COPY nsd.conf.example /etc/nsd/nsd.conf
+
+# Create directories
+RUN mkdir -p \
+    /etc/nsd/zones \
+    /var/db/nsd \
+    /var/run/nsd \
+    /var/log/supervisor \
+    /app/logs
+
+# Setup NSD
+RUN nsd-control-setup
+
+# Create supervisord config
+RUN echo "[supervisord]" > /etc/supervisord.conf && \
+    echo "nodaemon=true" >> /etc/supervisord.conf && \
+    echo "user=root" >> /etc/supervisord.conf && \
+    echo "" >> /etc/supervisord.conf && \
+    echo "[program:nsd]" >> /etc/supervisord.conf && \
+    echo "command=/usr/sbin/nsd -d" >> /etc/supervisord.conf && \
+    echo "autostart=true" >> /etc/supervisord.conf && \
+    echo "autorestart=true" >> /etc/supervisord.conf && \
+    echo "stderr_logfile=/var/log/supervisor/nsd.err.log" >> /etc/supervisord.conf && \
+    echo "stdout_logfile=/var/log/supervisor/nsd.out.log" >> /etc/supervisord.conf && \
+    echo "" >> /etc/supervisord.conf && \
+    echo "[program:api]" >> /etc/supervisord.conf && \
+    echo "command=/usr/local/bin/node /app/server.js" >> /etc/supervisord.conf && \
+    echo "directory=/app" >> /etc/supervisord.conf && \
+    echo "autostart=true" >> /etc/supervisord.conf && \
+    echo "autorestart=true" >> /etc/supervisord.conf && \
+    echo "stderr_logfile=/var/log/supervisor/api.err.log" >> /etc/supervisord.conf && \
+    echo "stdout_logfile=/var/log/supervisor/api.out.log" >> /etc/supervisord.conf
+
+# Make CLI executable
+RUN chmod +x ipnfyi-cli.js
+
+# Expose ports
+EXPOSE 3000 53/udp 53/tcp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:3000/api/health || exit 1
+
+# Start supervisord to manage both processes
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

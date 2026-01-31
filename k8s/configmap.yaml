@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ipnfyi-config
+  namespace: ipnfyi
+data:
+  PORT: "3000"
+  NODE_ENV: "production"
+  NSD_ZONE_DIR: "/etc/nsd/zones"
+  NSD_ZONE_FILE: "/etc/nsd/zones/n.ipn.fyi.zone"
+  NSD_CONTROL_PATH: "/usr/sbin/nsd-control"
+  BASE_DOMAIN: "n.ipn.fyi"
+  MAIN_DOMAIN: "ipn.fyi"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"

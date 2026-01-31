@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ipnfyi
+  namespace: ipnfyi
+  labels:
+    app: ipnfyi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ipnfyi
+  template:
+    metadata:
+      labels:
+        app: ipnfyi
+    spec:
+      containers:
+      # Main API container
+      - name: api
+        image: ghcr.io/straticus1/ipnfyi:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: ipnfyi-config
+        - secretRef:
+            name: ipnfyi-secret
+        volumeMounts:
+        - name: nsd-zones
+          mountPath: /etc/nsd/zones
+        - name: logs
+          mountPath: /app/logs
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+
+      # NSD DNS server sidecar
+      - name: nsd
+        image: alpine:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          apk add --no-cache nsd
+          nsd-control-setup
+
+          # Create minimal NSD config
+          cat > /etc/nsd/nsd.conf <<EOF
+          server:
+            server-count: 1
+            ip4-only: no
+            hide-version: yes
+            verbosity: 1
+            database: ""
+            pidfile: "/var/run/nsd/nsd.pid"
+
+          zone:
+            name: "n.ipn.fyi"
+            zonefile: "/etc/nsd/zones/n.ipn.fyi.zone"
+
+          remote-control:
+            control-enable: yes
+            control-interface: 127.0.0.1
+          EOF
+
+          # Start NSD
+          exec nsd -d
+        ports:
+        - containerPort: 53
+          name: dns-udp
+          protocol: UDP
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        volumeMounts:
+        - name: nsd-zones
+          mountPath: /etc/nsd/zones
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+
+      volumes:
+      - name: nsd-zones
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+
+      # Run on ARM nodes only
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - arm64
+                - aarch64

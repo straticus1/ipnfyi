@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # ipn.fyi API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ipnfyi-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=3000
+      - NSD_ZONE_DIR=/etc/nsd/zones
+      - NSD_ZONE_FILE=/etc/nsd/zones/n.ipn.fyi.zone
+      - NSD_CONTROL_PATH=/usr/sbin/nsd-control
+      - BASE_DOMAIN=n.ipn.fyi
+      - MAIN_DOMAIN=ipn.fyi
+      - RATE_LIMIT_WINDOW_MS=900000
+      - RATE_LIMIT_MAX_REQUESTS=100
+    volumes:
+      - nsd-zones:/etc/nsd/zones
+      - ./logs:/app/logs
+    networks:
+      - ipnfyi-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # NSD DNS Server
+  nsd:
+    image: alpine:latest
+    container_name: ipnfyi-nsd
+    restart: unless-stopped
+    command: >
+      sh -c "apk add --no-cache nsd &&
+             nsd-control-setup &&
+             nsd -d -c /etc/nsd/nsd.conf"
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - nsd-zones:/etc/nsd/zones:ro
+      - nsd-config:/etc/nsd
+      - nsd-db:/var/db/nsd
+    networks:
+      - ipnfyi-network
+    depends_on:
+      - api
+
+volumes:
+  nsd-zones:
+    driver: local
+  nsd-config:
+    driver: local
+  nsd-db:
+    driver: local
+
+networks:
+  ipnfyi-network:
+    driver: bridge
