@@ -1,0 +1,14 @@
+# Oracle Cloud Infrastructure Configuration
+# Copy this file to terraform.tfvars and update with your values
+
+# OCI Compartment OCID
+compartment_id = "ocid1.compartment.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Server IPv4 address (required)
+server_ipv4 = "123.456.789.012"
+
+# Server IPv6 address (optional)
+# server_ipv6 = "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+
+# Domain name (default: ipn.fyi)
+# domain_name = "ipn.fyi"
