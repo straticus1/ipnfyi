@@ -1,0 +1,13 @@
+[Unit]
+Description=ipn.fyi Dynamic DNS Update
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/update-ddns.sh
+User=nobody
+Group=nogroup
+
+[Install]
+WantedBy=multi-user.target

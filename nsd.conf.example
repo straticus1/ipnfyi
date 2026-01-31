@@ -1,0 +1,27 @@
+# NSD Configuration for ipn.fyi Dynamic DNS
+# Add this to your main nsd.conf or include it
+
+server:
+    server-count: 1
+    ip4-only: no
+    hide-version: yes
+    verbosity: 1
+    database: "/var/db/nsd/nsd.db"
+    logfile: "/var/log/nsd.log"
+    pidfile: "/var/run/nsd/nsd.pid"
+
+zone:
+    name: "n.ipn.fyi"
+    zonefile: "/etc/nsd/zones/n.ipn.fyi.zone"
+    # Allow the API to reload the zone
+    # Ensure the API user has permission to run nsd-control
+
+# Remote control for zone reloads
+remote-control:
+    control-enable: yes
+    control-interface: 127.0.0.1
+    control-port: 8952
+    server-key-file: "/etc/nsd/nsd_server.key"
+    server-cert-file: "/etc/nsd/nsd_server.pem"
+    control-key-file: "/etc/nsd/nsd_control.key"
+    control-cert-file: "/etc/nsd/nsd_control.pem"

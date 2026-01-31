@@ -1,0 +1,11 @@
+[Unit]
+Description=ipn.fyi Dynamic DNS Update Timer
+Requires=ipnfyi-ddns.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Unit=ipnfyi-ddns.service
+
+[Install]
+WantedBy=timers.target
