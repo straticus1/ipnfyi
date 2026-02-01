@@ -19,7 +19,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install Node.js dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Copy application files
 COPY server.js .
@@ -36,8 +36,8 @@ RUN mkdir -p \
     /var/log/supervisor \
     /app/logs
 
-# Setup NSD
-RUN nsd-control-setup
+# Setup NSD (make optional as nsd-control-setup may not exist)
+RUN nsd-control-setup 2>/dev/null || echo "nsd-control-setup not available, skipping"
 
 # Create supervisord config
 RUN echo "[supervisord]" > /etc/supervisord.conf && \
