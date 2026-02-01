@@ -22,48 +22,48 @@
         }
 
         .container {
-            background: white;
+            background: #1a202c;
             border-radius: 16px;
             padding: 60px 40px;
             max-width: 600px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             text-align: center;
         }
 
         h1 {
             font-size: 2.5rem;
-            color: #2d3748;
+            color: #f7fafc;
             margin-bottom: 10px;
             font-weight: 700;
         }
 
         .subtitle {
             font-size: 1.25rem;
-            color: #4a5568;
+            color: #cbd5e0;
             margin-bottom: 40px;
         }
 
         .powered-by {
             font-size: 1rem;
-            color: #718096;
+            color: #a0aec0;
             margin-bottom: 40px;
         }
 
         .powered-by a {
-            color: #667eea;
+            color: #9f7aea;
             text-decoration: none;
             font-weight: 600;
             transition: color 0.3s ease;
         }
 
         .powered-by a:hover {
-            color: #764ba2;
+            color: #b794f4;
         }
 
         .info-box {
-            background: #f7fafc;
-            border-left: 4px solid #667eea;
+            background: #2d3748;
+            border-left: 4px solid #9f7aea;
             padding: 20px;
             margin: 30px 0;
             text-align: left;
@@ -71,24 +71,24 @@
         }
 
         .info-box h3 {
-            color: #2d3748;
+            color: #f7fafc;
             margin-bottom: 10px;
             font-size: 1.1rem;
         }
 
         .info-box p {
-            color: #4a5568;
+            color: #cbd5e0;
             line-height: 1.6;
             margin-bottom: 10px;
         }
 
         .info-box code {
-            background: #e2e8f0;
+            background: #4a5568;
             padding: 2px 6px;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
-            color: #2d3748;
+            color: #f7fafc;
         }
 
         .api-info {
@@ -97,26 +97,27 @@
         }
 
         .api-info h3 {
-            color: #2d3748;
+            color: #f7fafc;
             margin-bottom: 15px;
         }
 
         .api-endpoint {
-            background: #2d3748;
-            color: #fff;
+            background: #0d1117;
+            color: #e6edf3;
             padding: 15px;
             border-radius: 8px;
             font-family: 'Courier New', monospace;
             font-size: 0.85rem;
             overflow-x: auto;
             margin-bottom: 15px;
+            border: 1px solid #30363d;
         }
 
         .footer {
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-            color: #718096;
+            border-top: 1px solid #4a5568;
+            color: #a0aec0;
             font-size: 0.9rem;
         }
 
@@ -128,20 +129,20 @@
         }
 
         .feature {
-            background: #f7fafc;
+            background: #2d3748;
             padding: 20px;
             border-radius: 8px;
             text-align: left;
         }
 
         .feature h4 {
-            color: #667eea;
+            color: #9f7aea;
             margin-bottom: 8px;
             font-size: 1rem;
         }
 
         .feature p {
-            color: #4a5568;
+            color: #cbd5e0;
             font-size: 0.9rem;
             line-height: 1.5;
         }
@@ -179,7 +180,7 @@
 
         <div class="api-info">
             <h3>Quick Start</h3>
-            <p style="color: #4a5568; margin-bottom: 15px;">Update your IP with a simple curl command:</p>
+            <p style="color: #cbd5e0; margin-bottom: 15px;">Update your IP with a simple curl command:</p>
             <div class="api-endpoint">
 curl -X POST https://ipn.fyi/api/update \<br>
 &nbsp;&nbsp;-H "X-API-Key: YOUR_API_KEY" \<br>
@@ -187,7 +188,7 @@ curl -X POST https://ipn.fyi/api/update \<br>
 &nbsp;&nbsp;-d '{"domain":"yourname","ipv4":"1.2.3.4"}'
             </div>
 
-            <p style="color: #4a5568; margin-bottom: 15px;">Or use a simple GET request:</p>
+            <p style="color: #cbd5e0; margin-bottom: 15px;">Or use a simple GET request:</p>
             <div class="api-endpoint">
 curl "https://ipn.fyi/api/update?key=YOUR_API_KEY&domain=yourname&ipv4=1.2.3.4"
             </div>
@@ -195,7 +196,7 @@ curl "https://ipn.fyi/api/update?key=YOUR_API_KEY&domain=yourname&ipv4=1.2.3.4"
 
         <div class="footer">
             <p>Need an API key? Contact your administrator.</p>
-            <p>View our <a href="https://www.dnsscience.io" target="_blank" style="color: #667eea; text-decoration: none;">documentation</a> for more information.</p>
+            <p>View our <a href="https://www.dnsscience.io" target="_blank" style="color: #9f7aea; text-decoration: none;">documentation</a> for more information.</p>
         </div>
     </div>
 </body>
