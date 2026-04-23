@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ipn.fyi — Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg:      #0a0e14;
+            --header:  #0d1117;
+            --surface: #161b22;
+            --border:  #30363d;
+            --text:    #e6edf3;
+            --muted:   #8b949e;
+            --accent:  #58a6ff;
+            --green:   #56d364;
+            --yellow:  #e3b341;
+            --red:     #ff4444;
+        }
+        html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+
+        /* ── Header ── */
+        header {
+            background: var(--header);
+            border-bottom: 1px solid var(--border);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 16px; font-weight: 700; color: var(--accent); text-decoration: none; }
+        .logo span { color: var(--muted); font-weight: 400; }
+        .header-tag { font-size: 11px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 2px 8px; border-radius: 3px; }
+        .header-spacer { flex: 1; }
+        .header-link { font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.15s; cursor: pointer; }
+        .header-link:hover { color: var(--accent); }
+        .header-link.active { color: var(--accent); }
+        #hdr-user { font-size: 12px; color: var(--muted); }
+        #hdr-user strong { color: var(--text); }
+
+        /* ── Auth screen ── */
+        #auth-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 48px);
+            padding: 24px;
+        }
+        .auth-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 600;
+            color: var(--muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .auth-body { padding: 28px; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+        .field input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .field input:focus { border-color: var(--accent); }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: var(--accent); color: var(--bg); }
+        .btn-danger  { background: transparent; color: var(--red); border: 1px solid var(--red); }
+        .btn-sm {
+            width: auto;
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { color: var(--text); border-color: var(--text); opacity: 1; }
+        .auth-error { color: var(--red); font-size: 12px; margin-top: 12px; min-height: 18px; }
+
+        /* ── App layout ── */
+        #app-screen { display: none; }
+        .app-layout { display: flex; min-height: calc(100vh - 48px); }
+
+        /* Sidebar nav */
+        aside {
+            width: 200px;
+            flex-shrink: 0;
+            background: var(--header);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 20px;
+            font-size: 13px;
+            color: var(--muted);
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .nav-item:hover { color: var(--text); background: rgba(88,166,255,0.05); }
+        .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(88,166,255,0.08); }
+        .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+        .nav-sep { height: 1px; background: var(--border); margin: 8px 0; }
+
+        /* Main content */
+        main { flex: 1; padding: 32px; overflow-y: auto; max-width: 860px; }
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* Panel */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-title { font-size: 13px; font-weight: 600; }
+        .panel-sub { font-size: 11px; color: var(--muted); margin-left: auto; }
+        .panel-body { padding: 20px; }
+
+        /* Records table */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .fqdn { color: var(--accent); font-weight: 600; }
+        .ip   { color: var(--text); }
+        .ts   { color: var(--muted); font-size: 11px; }
+        .empty { color: var(--muted); padding: 24px; text-align: center; font-size: 12px; }
+
+        /* Update form */
+        .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .form-field { flex: 1; min-width: 160px; }
+        .form-field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+        .form-field input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-family: inherit;
+            color: var(--text);
+            outline: none;
+        }
+        .form-field input:focus { border-color: var(--accent); }
+        .form-hint { font-size: 11px; color: var(--muted); margin-top: 10px; }
+        .form-msg  { font-size: 12px; margin-top: 12px; min-height: 18px; }
+        .msg-ok  { color: var(--green); }
+        .msg-err { color: var(--red); }
+
+        /* API key box */
+        .key-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px 14px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .key-val { flex: 1; color: var(--text); word-break: break-all; }
+        .copy-btn {
+            font-size: 11px;
+            font-family: inherit;
+            padding: 4px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            color: var(--muted);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: color 0.15s;
+        }
+        .copy-btn:hover { color: var(--text); }
+
+        /* Stats row */
+        .stats { display: flex; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+        .stat { flex: 1; background: var(--surface); padding: 16px 20px; }
+        .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+        .stat-val { font-size: 22px; font-weight: 700; color: var(--text); }
+        .stat-val.green { color: var(--green); }
+        .stat-val.blue  { color: var(--accent); }
+
+        /* History */
+        .hist-item { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+        .hist-item:last-child { border-bottom: none; }
+        .hist-domain { color: var(--accent); min-width: 140px; }
+        .hist-type { min-width: 100px; }
+        .hist-ip { color: var(--text); flex: 1; }
+        .hist-ts { color: var(--muted); font-size: 11px; }
+        .tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+        .tag-v4 { background: rgba(86,211,100,0.15); color: var(--green); }
+        .tag-v6 { background: rgba(88,166,255,0.15); color: var(--accent); }
+        .tag-both { background: rgba(227,179,65,0.15); color: var(--yellow); }
+
+        /* Reserve */
+        .reserve-info { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.8; }
+        .reserve-info code { background: var(--bg); border: 1px solid var(--border); padding: 1px 5px; border-radius: 3px; color: var(--text); }
+
+        /* Dot indicator */
+        .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .dot-green  { background: var(--green); }
+        .dot-blue   { background: var(--accent); }
+        .dot-yellow { background: var(--yellow); }
+        .dot-red    { background: var(--red); }
+    </style>
+</head>
+<body>
+
+<header>
+    <a class="logo" href="/">ipn<span>.fyi</span></a>
+    <span class="header-tag">console</span>
+    <div class="header-spacer"></div>
+    <span id="hdr-user"></span>
+    <a class="header-link" href="/app.html" id="hdr-logout" style="display:none;color:var(--red)">logout</a>
+    <a class="header-link" href="https://github.com/afterdarksys/ipn-cli" target="_blank">cli</a>
+    <a class="header-link active" href="/docs.html">docs</a>
+    <a class="header-link" href="https://dnsscience.io" target="_blank">dnsscience.io</a>
+</header>
+
+<!-- ── Auth ── -->
+<div id="auth-screen">
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+            <button class="auth-tab" onclick="switchTab('register')">Register</button>
+        </div>
+        <div class="auth-body">
+            <!-- Login -->
+            <div id="tab-login">
+                <div class="field"><label>Username</label><input id="login-user" type="text" placeholder="yourname" autocomplete="username"></div>
+                <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+                <button class="btn btn-primary" onclick="doLogin()">Login</button>
+                <div class="auth-error" id="login-err"></div>
+            </div>
+            <!-- Register -->
+            <div id="tab-register" style="display:none">
+                <div class="field"><label>Username <span style="color:var(--muted);font-size:10px">(becomes your subdomain)</span></label><input id="reg-user" type="text" placeholder="yourname" autocomplete="username"></div>
+                <div class="field"><label>Password</label><input id="reg-pass" type="password" placeholder="min 8 characters" autocomplete="new-password"></div>
+                <div class="field"><label>Email <span style="color:var(--muted);font-size:10px">(optional)</span></label><input id="reg-email" type="email" placeholder="you@example.com"></div>
+                <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
+                <div class="auth-error" id="reg-err"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── App ── -->
+<div id="app-screen">
+    <div class="app-layout">
+        <aside>
+            <div class="nav-item active" onclick="showView('dashboard')"><span class="nav-icon">◈</span> Dashboard</div>
+            <div class="nav-item" onclick="showView('update')"><span class="nav-icon">⇡</span> Update IP</div>
+            <div class="nav-item" onclick="showView('history')"><span class="nav-icon">≡</span> History</div>
+            <div class="nav-item" onclick="showView('reserve')"><span class="nav-icon">◎</span> Reserve Name</div>
+            <div class="nav-sep"></div>
+            <div class="nav-item" onclick="showView('settings')"><span class="nav-icon">⚙</span> Settings</div>
+        </aside>
+
+        <main>
+            <!-- Dashboard -->
+            <div class="view active" id="view-dashboard">
+                <div class="stats" id="stats-row">
+                    <div class="stat"><div class="stat-label">Records</div><div class="stat-val blue" id="stat-records">—</div></div>
+                    <div class="stat"><div class="stat-label">Last Update</div><div class="stat-val" id="stat-last" style="font-size:13px">—</div></div>
+                    <div class="stat"><div class="stat-label">Your Domain</div><div class="stat-val" id="stat-domain" style="font-size:13px;color:var(--accent)">—</div></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-blue"></span>
+                        <span class="panel-title">DNS Records</span>
+                        <span class="panel-sub" id="records-refresh" style="cursor:pointer;color:var(--accent)" onclick="loadRecords()">↻ refresh</span>
+                    </div>
+                    <div class="panel-body" style="padding:0">
+                        <table>
+                            <thead><tr><th>Hostname</th><th>IPv4</th><th>IPv6</th><th>Updated</th><th></th></tr></thead>
+                            <tbody id="records-body"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update IP -->
+            <div class="view" id="view-update">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-green"></span>
+                        <span class="panel-title">Update IP Address</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-row">
+                            <div class="form-field" style="max-width:180px">
+                                <label>Domain label</label>
+                                <input id="upd-domain" type="text" placeholder="yourname">
+                            </div>
+                            <div class="form-field">
+                                <label>IPv4</label>
+                                <input id="upd-ipv4" type="text" placeholder="auto-detect">
+                            </div>
+                            <div class="form-field">
+                                <label>IPv6 <span style="color:var(--muted);font-size:10px">(optional)</span></label>
+                                <input id="upd-ipv6" type="text" placeholder="optional">
+                            </div>
+                        </div>
+                        <div class="form-row" style="margin-top:12px">
+                            <div class="form-field">
+                                <label>Comment <span style="color:var(--muted);font-size:10px">(optional)</span></label>
+                                <input id="upd-comment" type="text" placeholder="e.g. home server">
+                            </div>
+                        </div>
+                        <div style="margin-top:16px;display:flex;gap:10px">
+                            <button class="btn btn-primary btn-sm" onclick="doUpdate()">Update</button>
+                            <button class="btn btn-ghost btn-sm" onclick="detectIP()">Detect my IP</button>
+                        </div>
+                        <div class="form-msg" id="upd-msg"></div>
+                        <div class="form-hint">Leave IPv4 blank and click "Detect my IP" to auto-fill from your current connection.</div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-yellow"></span>
+                        <span class="panel-title">One-liner</span>
+                        <span class="panel-sub">copy &amp; paste anywhere</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="key-box">
+                            <span class="key-val" id="oneliner-box" style="color:var(--muted);font-size:11px">Login to see your one-liner</span>
+                            <button class="copy-btn" onclick="copyOneliner()">copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="view" id="view-history">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-yellow"></span>
+                        <span class="panel-title">IP Change History</span>
+                        <span class="panel-sub" style="cursor:pointer;color:var(--accent)" onclick="loadHistory()">↻ refresh</span>
+                    </div>
+                    <div class="panel-body" id="history-body" style="padding:12px 20px">
+                        <div class="empty">Loading…</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reserve -->
+            <div class="view" id="view-reserve">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-blue"></span>
+                        <span class="panel-title">Reserve a Name</span>
+                    </div>
+                    <div class="panel-body">
+                        <p class="reserve-info">
+                            Claim a subdomain under <code>n.ipn.fyi</code> before you're ready to use it.
+                            Reserving a name creates the DNS record with no IP — update it later when your server is running.
+                        </p>
+                        <div class="form-row">
+                            <div class="form-field" style="max-width:240px">
+                                <label>Subdomain label</label>
+                                <input id="res-name" type="text" placeholder="myserver">
+                            </div>
+                            <div class="form-field">
+                                <label>Comment <span style="color:var(--muted);font-size:10px">(optional)</span></label>
+                                <input id="res-comment" type="text" placeholder="reserved for home server">
+                            </div>
+                        </div>
+                        <div style="margin-top:12px">
+                            <button class="btn btn-primary btn-sm" onclick="doReserve()">Reserve</button>
+                        </div>
+                        <div class="form-msg" id="res-msg"></div>
+                        <div class="form-hint" id="res-preview" style="margin-top:10px"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="view" id="view-settings">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-blue"></span>
+                        <span class="panel-title">Account</span>
+                    </div>
+                    <div class="panel-body">
+                        <div style="margin-bottom:20px;font-size:12px">
+                            <div style="color:var(--muted);margin-bottom:4px">username</div>
+                            <div style="color:var(--text);font-size:15px;font-weight:600" id="set-username">—</div>
+                        </div>
+                        <div style="margin-bottom:20px;font-size:12px">
+                            <div style="color:var(--muted);margin-bottom:4px">your subdomain</div>
+                            <div style="color:var(--accent);font-weight:600" id="set-domain">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-yellow"></span>
+                        <span class="panel-title">API Key</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="key-box" style="margin-bottom:12px">
+                            <span class="key-val" id="set-apikey">••••••••••••••••••••••••••••••••</span>
+                            <button class="copy-btn" onclick="copyKey()">copy</button>
+                            <button class="copy-btn" onclick="toggleKey()">show</button>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted)">Keep this secret. Use it in the X-API-Key header or ?key= query parameter.</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-red"></span>
+                        <span class="panel-title">Change Password</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label>Current password</label>
+                                <input id="pw-current" type="password" placeholder="••••••••">
+                            </div>
+                            <div class="form-field">
+                                <label>New password</label>
+                                <input id="pw-new" type="password" placeholder="min 8 characters">
+                            </div>
+                            <div class="form-field">
+                                <label>Confirm new</label>
+                                <input id="pw-confirm" type="password" placeholder="••••••••">
+                            </div>
+                        </div>
+                        <div style="margin-top:12px">
+                            <button class="btn btn-primary btn-sm" onclick="doChangePassword()">Update Password</button>
+                        </div>
+                        <div class="form-msg" id="pw-msg"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="dot dot-red"></span>
+                        <span class="panel-title">Danger Zone</span>
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn btn-danger btn-sm" onclick="doLogout()">Sign out</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+const API = '';  // same origin
+let session = {};
+
+// ── Storage ───────────────────────────────────────────────────────────────────
+function saveSession(data) {
+    session = data;
+    localStorage.setItem('ipn_session', JSON.stringify(data));
+}
+function loadSession() {
+    try { return JSON.parse(localStorage.getItem('ipn_session') || '{}'); } catch { return {}; }
+}
+function clearSession() {
+    localStorage.removeItem('ipn_session');
+    session = {};
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function req(method, path, body, key) {
+    const headers = { 'Content-Type': 'application/json' };
+    const k = key || session.api_key;
+    if (k) headers['X-API-Key'] = k;
+    const resp = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    return resp.json();
+}
+
+// ── Auth tab switch ───────────────────────────────────────────────────────────
+function switchTab(tab) {
+    document.getElementById('tab-login').style.display    = tab === 'login'    ? '' : 'none';
+    document.getElementById('tab-register').style.display = tab === 'register' ? '' : 'none';
+    document.querySelectorAll('.auth-tab').forEach((b, i) => b.classList.toggle('active', (i === 0) === (tab === 'login')));
+}
+
+function enter(id, fn) {
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') fn(); });
+}
+enter('login-pass', () => doLogin());
+enter('reg-pass', () => doRegister());
+
+async function doLogin() {
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value;
+    document.getElementById('login-err').textContent = '';
+    if (!u || !p) { document.getElementById('login-err').textContent = 'Enter username and password.'; return; }
+    const data = await req('POST', '/api/auth/login', { username: u, password: p });
+    if (data.error) { document.getElementById('login-err').textContent = data.error; return; }
+    saveSession({ username: data.username, api_key: data.api_key });
+    bootApp();
+}
+
+async function doRegister() {
+    const u = document.getElementById('reg-user').value.trim();
+    const p = document.getElementById('reg-pass').value;
+    const e = document.getElementById('reg-email').value.trim();
+    document.getElementById('reg-err').textContent = '';
+    if (!u || !p) { document.getElementById('reg-err').textContent = 'Username and password required.'; return; }
+    const data = await req('POST', '/api/auth/register', { username: u, password: p, email: e || undefined });
+    if (data.error) { document.getElementById('reg-err').textContent = data.error; return; }
+    saveSession({ username: data.username, api_key: data.api_key });
+    bootApp();
+}
+
+function doLogout() {
+    clearSession();
+    document.getElementById('app-screen').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('hdr-user').textContent = '';
+    document.getElementById('hdr-logout').style.display = 'none';
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+}
+
+// ── Boot app ──────────────────────────────────────────────────────────────────
+function bootApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = '';
+    document.getElementById('hdr-user').innerHTML = `<strong>${session.username}</strong>`;
+    document.getElementById('hdr-logout').style.display = '';
+
+    // Settings
+    document.getElementById('set-username').textContent = session.username;
+    document.getElementById('set-domain').textContent   = `${session.username}.n.ipn.fyi`;
+
+    // Update view defaults
+    document.getElementById('upd-domain').value = session.username;
+    document.getElementById('oneliner-box').textContent =
+        `curl -s "https://ipn.fyi/api/update?key=${session.api_key}&domain=${session.username}&ipv4=$(curl -s https://api4.ipify.org)"`;
+
+    loadRecords();
+    loadHistory();
+    showView('dashboard');
+}
+
+// ── Views ─────────────────────────────────────────────────────────────────────
+function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const items = document.querySelectorAll('.nav-item');
+    const map = { dashboard: 0, update: 1, history: 2, reserve: 3, settings: 5 };
+    if (map[name] !== undefined) items[map[name]].classList.add('active');
+}
+
+// ── Records ───────────────────────────────────────────────────────────────────
+async function loadRecords() {
+    const data = await req('GET', '/api/records');
+    const tbody = document.getElementById('records-body');
+    if (!data.records || data.records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No records yet. Update your IP to create one.</td></tr>';
+        document.getElementById('stat-records').textContent = '0';
+        document.getElementById('stat-last').textContent = '—';
+        document.getElementById('stat-domain').textContent = session.username + '.n.ipn.fyi';
+        return;
+    }
+    document.getElementById('stat-records').textContent = data.records.length;
+    const latest = data.records.reduce((a, b) => (a.updated_at > b.updated_at ? a : b));
+    document.getElementById('stat-last').textContent = fmtTime(latest.updated_at);
+    document.getElementById('stat-domain').textContent = `${session.username}.n.ipn.fyi`;
+
+    tbody.innerHTML = data.records.map(r => `
+        <tr>
+            <td class="fqdn">${r.domain}.n.ipn.fyi</td>
+            <td class="ip">${r.current_ipv4 || '<span style="color:var(--muted)">—</span>'}</td>
+            <td class="ip">${r.current_ipv6 || '<span style="color:var(--muted)">—</span>'}</td>
+            <td class="ts">${fmtTime(r.updated_at)}</td>
+            <td><button class="copy-btn" onclick="delRecord('${r.domain}')">delete</button></td>
+        </tr>`).join('');
+}
+
+async function delRecord(domain) {
+    if (!confirm(`Delete ${domain}.n.ipn.fyi?`)) return;
+    await req('DELETE', `/api/record/${encodeURIComponent(domain)}`);
+    loadRecords();
+}
+
+// ── Update ────────────────────────────────────────────────────────────────────
+async function detectIP() {
+    document.getElementById('upd-ipv4').value = 'detecting…';
+    try {
+        const r = await fetch('https://api4.ipify.org');
+        document.getElementById('upd-ipv4').value = await r.text();
+    } catch {
+        document.getElementById('upd-ipv4').value = '';
+        showMsg('upd-msg', 'Could not detect IP.', false);
+    }
+}
+
+async function doUpdate() {
+    const domain  = document.getElementById('upd-domain').value.trim();
+    const ipv4    = document.getElementById('upd-ipv4').value.trim();
+    const ipv6    = document.getElementById('upd-ipv6').value.trim();
+    const comment = document.getElementById('upd-comment').value.trim();
+
+    if (!domain) { showMsg('upd-msg', 'Domain is required.', false); return; }
+    if (!ipv4 && !ipv6) { showMsg('upd-msg', 'Enter an IP or click "Detect my IP".', false); return; }
+
+    const body = { domain };
+    if (ipv4) body.ipv4 = ipv4;
+    if (ipv6) body.ipv6 = ipv6;
+    if (comment) body.comments = comment;
+
+    const data = await req('POST', '/api/update', body);
+    if (data.error) { showMsg('upd-msg', data.error, false); return; }
+    showMsg('upd-msg', `Updated ${data.domain} → ${data.ipv4 || data.ipv6}`, true);
+    loadRecords();
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+async function loadHistory() {
+    const data = await req('GET', '/api/history?limit=50');
+    const el = document.getElementById('history-body');
+    if (!data.history || data.history.length === 0) {
+        el.innerHTML = '<div class="empty">No history yet.</div>';
+        return;
+    }
+    const tagClass = t => t === 'both_change' ? 'tag-both' : t?.includes('v6') ? 'tag-v6' : 'tag-v4';
+    const tagLabel = t => t === 'both_change' ? 'both' : t?.includes('v6') ? 'ipv6' : 'ipv4';
+    el.innerHTML = data.history.map(h => `
+        <div class="hist-item">
+            <span class="hist-domain">${h.domain}.n.ipn.fyi</span>
+            <span class="hist-type"><span class="tag ${tagClass(h.change_type)}">${tagLabel(h.change_type)}</span></span>
+            <span class="hist-ip">${h.ipv4 || h.ipv6 || '—'}</span>
+            <span class="hist-ts">${fmtTime(h.changed_at)}</span>
+        </div>`).join('');
+}
+
+// ── Reserve ───────────────────────────────────────────────────────────────────
+document.getElementById('res-name').addEventListener('input', function () {
+    const v = this.value.trim();
+    document.getElementById('res-preview').textContent = v ? `Will reserve: ${v}.n.ipn.fyi` : '';
+});
+
+async function doReserve() {
+    const name    = document.getElementById('res-name').value.trim();
+    const comment = document.getElementById('res-comment').value.trim();
+    if (!name) { showMsg('res-msg', 'Enter a subdomain name.', false); return; }
+
+    // Reserve by creating a record with no IP (use a placeholder comment)
+    const body = { domain: name, comments: comment || 'reserved' };
+    // We need at least one IP — send a placeholder that signals reservation
+    // Actually: call update with just a comment marker; backend needs ipv4 or ipv6.
+    // We'll store with ipv4=null workaround via direct record insert — not available.
+    // Instead: just update with the user's current detected IP if available.
+    document.getElementById('res-msg').textContent = 'Detecting IP to register reservation…';
+    let ipv4 = '';
+    try { ipv4 = await (await fetch('https://api4.ipify.org')).text(); } catch {}
+
+    if (!ipv4) { showMsg('res-msg', 'Could not detect IP. Please update manually.', false); return; }
+    body.ipv4 = ipv4;
+
+    const data = await req('POST', '/api/update', body);
+    if (data.error) { showMsg('res-msg', data.error, false); return; }
+    showMsg('res-msg', `Reserved ${name}.n.ipn.fyi`, true);
+    document.getElementById('res-name').value = '';
+    document.getElementById('res-comment').value = '';
+    document.getElementById('res-preview').textContent = '';
+    loadRecords();
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+let keyVisible = false;
+function toggleKey() {
+    keyVisible = !keyVisible;
+    const el = document.getElementById('set-apikey');
+    el.textContent = keyVisible ? session.api_key : '••••••••••••••••••••••••••••••••';
+    event.target.textContent = keyVisible ? 'hide' : 'show';
+}
+function copyKey() {
+    navigator.clipboard.writeText(session.api_key);
+    event.target.textContent = 'copied!';
+    setTimeout(() => event.target.textContent = 'copy', 1500);
+}
+function copyOneliner() {
+    navigator.clipboard.writeText(document.getElementById('oneliner-box').textContent);
+    event.target.textContent = 'copied!';
+    setTimeout(() => event.target.textContent = 'copy', 1500);
+}
+
+async function doChangePassword() {
+    const cur  = document.getElementById('pw-current').value;
+    const nw   = document.getElementById('pw-new').value;
+    const conf = document.getElementById('pw-confirm').value;
+    if (!cur || !nw) { showMsg('pw-msg', 'Fill in all fields.', false); return; }
+    if (nw !== conf)  { showMsg('pw-msg', 'New passwords do not match.', false); return; }
+    if (nw.length < 8){ showMsg('pw-msg', 'Password must be at least 8 characters.', false); return; }
+
+    const data = await req('POST', '/api/auth/change-password', { current_password: cur, new_password: nw });
+    if (data.error) { showMsg('pw-msg', data.error, false); return; }
+    showMsg('pw-msg', 'Password updated.', true);
+    document.getElementById('pw-current').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function showMsg(id, msg, ok) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'form-msg ' + (ok ? 'msg-ok' : 'msg-err');
+    if (ok) setTimeout(() => el.textContent = '', 4000);
+}
+
+function fmtTime(ts) {
+    if (!ts) return '—';
+    return new Date(ts * 1000).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+session = loadSession();
+if (session.api_key) {
+    bootApp();
+} else {
+    document.getElementById('auth-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>

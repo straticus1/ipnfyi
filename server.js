@@ -279,6 +279,40 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
   }
 });
 
+// POST /api/auth/change-password
+app.post('/api/auth/change-password', authLimiter, authenticateApiKey, async (req, res) => {
+  const { current_password, new_password } = req.body;
+  if (!current_password || !new_password) {
+    return res.status(400).json({ error: 'current_password and new_password are required' });
+  }
+  if (new_password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
+  try {
+    const result = await pool.query(
+      'SELECT password_hash, salt FROM users WHERE username = $1', [req.user]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+    const { password_hash, salt } = result.rows[0];
+    const checkHash = await hashPassword(current_password, salt);
+    if (checkHash !== password_hash) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+    const newSalt = generateSalt();
+    const newHash = await hashPassword(new_password, newSalt);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, salt = $2 WHERE username = $3',
+      [newHash, newSalt, req.user]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Failed to change password.' });
+  }
+});
+
 // GET /api/auth/whoami
 app.get('/api/auth/whoami', authenticateApiKey, async (req, res) => {
   try {

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ipn.fyi — Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg:      #0a0e14;
+            --header:  #0d1117;
+            --surface: #161b22;
+            --border:  #30363d;
+            --text:    #e6edf3;
+            --muted:   #8b949e;
+            --accent:  #58a6ff;
+            --green:   #56d364;
+            --yellow:  #e3b341;
+            --red:     #ff4444;
+        }
+        html, body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.7; }
+
+        header {
+            background: var(--header);
+            border-bottom: 1px solid var(--border);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { font-size: 16px; font-weight: 700; color: var(--accent); text-decoration: none; }
+        .logo span { color: var(--muted); font-weight: 400; }
+        .header-tag { font-size: 11px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 2px 8px; border-radius: 3px; }
+        .header-spacer { flex: 1; }
+        .header-link { font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        .header-link:hover { color: var(--accent); }
+        .header-link.active { color: var(--accent); }
+
+        .layout { display: flex; min-height: calc(100vh - 48px); }
+
+        /* Sidebar */
+        nav {
+            width: 220px;
+            flex-shrink: 0;
+            background: var(--header);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            position: sticky;
+            top: 48px;
+            height: calc(100vh - 48px);
+            overflow-y: auto;
+        }
+        .nav-section { padding: 0 16px 8px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 16px; }
+        .nav-section:first-child { margin-top: 0; }
+        nav a { display: block; padding: 6px 16px; font-size: 12px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+        nav a:hover { color: var(--text); background: rgba(88,166,255,0.05); }
+        nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(88,166,255,0.08); }
+
+        /* Content */
+        article { flex: 1; padding: 48px; max-width: 780px; }
+
+        h1 { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+        h2 { font-size: 17px; font-weight: 700; color: var(--text); margin: 48px 0 16px; padding-top: 48px; border-top: 1px solid var(--border); }
+        h2:first-of-type { border-top: none; margin-top: 24px; padding-top: 0; }
+        h3 { font-size: 14px; font-weight: 600; color: var(--accent); margin: 28px 0 10px; }
+        p { color: var(--muted); margin-bottom: 14px; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .lead { font-size: 15px; color: var(--text); margin-bottom: 24px; line-height: 1.8; }
+
+        pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px 18px;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            line-height: 1.9;
+        }
+        code { font-family: 'JetBrains Mono', monospace; }
+        p code, li code {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .c  { color: var(--muted); }
+        .kw { color: var(--accent); }
+        .st { color: var(--green); }
+        .fl { color: var(--yellow); }
+
+        /* Method badges */
+        .method { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+        .GET    { background: rgba(86,211,100,0.15); color: var(--green); }
+        .POST   { background: rgba(88,166,255,0.15); color: var(--accent); }
+        .DELETE { background: rgba(255,68,68,0.15);  color: var(--red); }
+
+        /* Endpoint cards */
+        .endpoint {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .endpoint-head {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .endpoint-path { font-size: 13px; font-weight: 600; color: var(--text); }
+        .endpoint-desc { font-size: 12px; color: var(--muted); margin-left: auto; }
+        .endpoint-body { padding: 16px; }
+        .endpoint-body p { margin-bottom: 8px; font-size: 12px; }
+
+        /* Param table */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 12px; }
+        th { text-align: left; padding: 8px 12px; background: var(--header); color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+        td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+        td:first-child { color: var(--accent); font-weight: 500; }
+        td:nth-child(2) { color: var(--muted); }
+        tr:last-child td { border-bottom: none; }
+
+        .badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; }
+        .req  { background: rgba(255,68,68,0.15); color: var(--red); }
+        .opt  { background: rgba(139,148,158,0.15); color: var(--muted); }
+        .auth { background: rgba(227,179,65,0.15); color: var(--yellow); }
+
+        ul { padding-left: 20px; color: var(--muted); margin-bottom: 14px; }
+        li { margin-bottom: 4px; font-size: 13px; }
+
+        .step { display: flex; gap: 14px; margin-bottom: 20px; }
+        .step-num { width: 28px; height: 28px; border-radius: 50%; background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3); color: var(--accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+        .step-body h4 { font-size: 13px; color: var(--text); margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a class="logo" href="/">ipn<span>.fyi</span></a>
+    <span class="header-tag">docs</span>
+    <div class="header-spacer"></div>
+    <a class="header-link" href="/app.html">console</a>
+    <a class="header-link" href="https://github.com/afterdarksys/ipn-cli" target="_blank">cli</a>
+    <a class="header-link active" href="/docs.html">docs</a>
+    <a class="header-link" href="https://dnsscience.io" target="_blank">dnsscience.io</a>
+</header>
+
+<div class="layout">
+<nav>
+    <div class="nav-section">Getting Started</div>
+    <a href="#overview" class="active">Overview</a>
+    <a href="#quickstart">Quick Start</a>
+    <a href="#concepts">Concepts</a>
+
+    <div class="nav-section">API</div>
+    <a href="#auth">Authentication</a>
+    <a href="#register">Register</a>
+    <a href="#login">Login</a>
+    <a href="#update">Update IP</a>
+    <a href="#records">Records</a>
+    <a href="#history">History</a>
+    <a href="#delete">Delete</a>
+
+    <div class="nav-section">CLI</div>
+    <a href="#cli-install">Install</a>
+    <a href="#cli-commands">Commands</a>
+    <a href="#cli-daemon">Daemon</a>
+
+    <div class="nav-section">Examples</div>
+    <a href="#ex-curl">cURL</a>
+    <a href="#ex-systemd">systemd</a>
+    <a href="#ex-cron">cron</a>
+</nav>
+
+<article>
+    <h1>ipn.fyi Documentation</h1>
+    <p class="lead">Free dynamic DNS for any device. Point a stable hostname like <code>you.n.ipn.fyi</code> to your changing IP address — updated via a simple API call.</p>
+
+    <!-- OVERVIEW -->
+    <h2 id="overview">Overview</h2>
+    <p>ipn.fyi is a dynamic DNS service powered by <a href="https://dnsscience.io">DNS Science</a>. Every registered user gets a subdomain under <code>n.ipn.fyi</code> that they can update any time their IP changes.</p>
+    <ul>
+        <li>Free, no credit card required</li>
+        <li>IPv4 and IPv6 support</li>
+        <li>REST API — one curl command to update</li>
+        <li>250-entry IP change history per domain</li>
+        <li>CLI client for Linux, macOS, Windows</li>
+    </ul>
+
+    <!-- QUICKSTART -->
+    <h2 id="quickstart">Quick Start</h2>
+
+    <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+            <h4>Register an account</h4>
+<pre><span class="kw">curl</span> <span class="fl">-X POST</span> https://ipn.fyi/api/auth/register \
+  <span class="fl">-H</span> <span class="st">"Content-Type: application/json"</span> \
+  <span class="fl">-d</span> <span class="st">'{"username":"yourname","password":"s3cure!"}'</span></pre>
+            <p>You get back an <code>api_key</code>. Save it.</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+            <h4>Update your IP</h4>
+<pre><span class="kw">curl</span> <span class="fl">-X POST</span> https://ipn.fyi/api/update \
+  <span class="fl">-H</span> <span class="st">"X-API-Key: YOUR_API_KEY"</span> \
+  <span class="fl">-H</span> <span class="st">"Content-Type: application/json"</span> \
+  <span class="fl">-d</span> <span class="st">'{"domain":"yourname","ipv4":"1.2.3.4"}'</span></pre>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+            <h4>Your hostname is live</h4>
+            <p>Once DNS updates propagate (~60s), <code>yourname.n.ipn.fyi</code> resolves to your IP.</p>
+        </div>
+    </div>
+
+    <!-- CONCEPTS -->
+    <h2 id="concepts">Concepts</h2>
+    <h3>Domains</h3>
+    <p>Each user owns one domain under <code>n.ipn.fyi</code> matching their username. Your username <code>alice</code> gets <code>alice.n.ipn.fyi</code>. Admin keys can manage any domain.</p>
+
+    <h3>API Keys</h3>
+    <p>All API calls (except register/login/health) require an <code>X-API-Key</code> header or a <code>?key=</code> query parameter. Your key is shown once on register and retrievable via login.</p>
+
+    <h3>TTL</h3>
+    <p>All records have a 300-second (5 minute) TTL. After updating your IP, propagation takes up to 5 minutes.</p>
+
+    <!-- AUTH -->
+    <h2 id="auth">Authentication</h2>
+    <p>Pass your API key on every request (except auth endpoints) via header or query param:</p>
+    <pre><span class="c"># Header (preferred)</span>
+X-API-Key: YOUR_API_KEY
+
+<span class="c"># Query param (for simple GET scripts)</span>
+?key=YOUR_API_KEY</pre>
+
+    <!-- REGISTER -->
+    <h2 id="register">Register</h2>
+    <div class="endpoint">
+        <div class="endpoint-head">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/auth/register</span>
+            <span class="endpoint-desc">No auth required</span>
+        </div>
+        <div class="endpoint-body">
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+                <tr><td>username</td><td>string</td><td>Letters, numbers, hyphens. Becomes your subdomain. <span class="badge req">required</span></td></tr>
+                <tr><td>password</td><td>string</td><td>Minimum 8 characters. <span class="badge req">required</span></td></tr>
+                <tr><td>email</td><td>string</td><td>Optional contact address. <span class="badge opt">optional</span></td></tr>
+            </table>
+<pre><span class="c">// Response 201</span>
+{
+  <span class="st">"success"</span>: true,
+  <span class="st">"username"</span>: <span class="st">"yourname"</span>,
+  <span class="st">"api_key"</span>: <span class="st">"a1b2c3..."</span>,
+  <span class="st">"domain"</span>: <span class="st">"yourname.n.ipn.fyi"</span>
+}</pre>
+        </div>
+    </div>
+
+    <!-- LOGIN -->
+    <h2 id="login">Login</h2>
+    <div class="endpoint">
+        <div class="endpoint-head">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/auth/login</span>
+            <span class="endpoint-desc">No auth required</span>
+        </div>
+        <div class="endpoint-body">
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+                <tr><td>username</td><td>string</td><td><span class="badge req">required</span></td></tr>
+                <tr><td>password</td><td>string</td><td><span class="badge req">required</span></td></tr>
+            </table>
+<pre><span class="c">// Response 200</span>
+{ <span class="st">"success"</span>: true, <span class="st">"username"</span>: <span class="st">"yourname"</span>, <span class="st">"api_key"</span>: <span class="st">"a1b2c3..."</span> }</pre>
+        </div>
+    </div>
+
+    <!-- UPDATE -->
+    <h2 id="update">Update IP</h2>
+    <div class="endpoint">
+        <div class="endpoint-head">
+            <span class="method POST">POST</span>
+            <span class="endpoint-path">/api/update</span>
+            <span class="endpoint-desc"><span class="badge auth">API key</span></span>
+        </div>
+        <div class="endpoint-body">
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+                <tr><td>domain</td><td>string</td><td>Your username / subdomain label. <span class="badge req">required</span></td></tr>
+                <tr><td>ipv4</td><td>string</td><td>IPv4 address. <span class="badge opt">optional*</span></td></tr>
+                <tr><td>ipv6</td><td>string</td><td>IPv6 address. <span class="badge opt">optional*</span></td></tr>
+                <tr><td>comments</td><td>string</td><td>Free-form note. <span class="badge opt">optional</span></td></tr>
+            </table>
+            <p>* At least one of <code>ipv4</code> or <code>ipv6</code> is required.</p>
+<pre><span class="c">// Response 200</span>
+{
+  <span class="st">"success"</span>: true,
+  <span class="st">"domain"</span>: <span class="st">"yourname.n.ipn.fyi"</span>,
+  <span class="st">"ipv4"</span>: <span class="st">"1.2.3.4"</span>,
+  <span class="st">"ipv6"</span>: null,
+  <span class="st">"updated_at"</span>: 1714000000
+}</pre>
+        </div>
+    </div>
+    <div class="endpoint">
+        <div class="endpoint-head">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/update</span>
+            <span class="endpoint-desc">Query param shorthand</span>
+        </div>
+        <div class="endpoint-body">
+<pre>GET /api/update?key=YOUR_KEY&domain=yourname&ipv4=1.2.3.4</pre>
+        </div>
+    </div>
+
+    <!-- RECORDS -->
+    <h2 id="records">Records</h2>
+    <div class="endpoint">
+        <div class="endpoint-head">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/records</span>
+            <span class="endpoint-desc"><span class="badge auth">API key</span></span>
+        </div>
+        <div class="endpoint-body">
+            <p>Optional: <code>?domain=yourname</code> to filter to a single record.</p>
+<pre><span class="c">// Response 200</span>
+{
+  <span class="st">"records"</span>: [
+    {
+      <span class="st">"domain"</span>: <span class="st">"yourname"</span>,
+      <span class="st">"current_ipv4"</span>: <span class="st">"1.2.3.4"</span>,
+      <span class="st">"current_ipv6"</span>: null,
+      <span class="st">"updated_at"</span>: 1714000000,
+      <span class="st">"version"</span>: 12
+    }
+  ]
+}</pre>
+        </div>
+    </div>
+
+    <!-- HISTORY -->
+    <h2 id="history">History</h2>
+    <div class="endpoint">
+        <div class="endpoint-head">
+            <span class="method GET">GET</span>
+            <span class="endpoint-path">/api/history</span>
+            <span class="endpoint-desc"><span class="badge auth">API key</span></span>
+        </div>
+        <div class="endpoint-body">
+            <p>Optional: <code>?domain=yourname&limit=50</code></p>
+<pre><span class="c">// Response 200</span>
+{
+  <span class="st">"history"</span>: [
+    { <span class="st">"domain"</span>: <span class="st">"yourname"</span>, <span class="st">"ipv4"</span>: <span class="st">"1.2.3.4"</span>, <span class="st">"changed_at"</span>: 1714000000, <span class="st">"change_type"</span>: <span class="st">"ipv4_change"</span> }
+  ]
+}</pre>
+        </div>
+    </div>
+
+    <!-- DELETE -->
+    <h2 id="delete">Delete Record</h2>
+    <div class="endpoint">
+        <div class="endpoint-head">
+            <span class="method DELETE">DELETE</span>
+            <span class="endpoint-path">/api/record/:domain</span>
+            <span class="endpoint-desc"><span class="badge auth">API key</span></span>
+        </div>
+        <div class="endpoint-body">
+<pre>DELETE /api/record/yourname
+X-API-Key: YOUR_KEY</pre>
+        </div>
+    </div>
+
+    <!-- CLI INSTALL -->
+    <h2 id="cli-install">CLI — Install</h2>
+    <p>The CLI is a single zero-dependency Python file. Python 3.8+ required.</p>
+<pre><span class="c"># via pip</span>
+<span class="kw">pip install</span> ipn-fyi
+
+<span class="c"># or grab the script directly</span>
+<span class="kw">curl</span> <span class="fl">-O</span> https://raw.githubusercontent.com/afterdarksys/ipn-cli/main/ipn.py
+<span class="kw">chmod</span> +x ipn.py && <span class="kw">sudo mv</span> ipn.py /usr/local/bin/ipn</pre>
+
+    <!-- CLI COMMANDS -->
+    <h2 id="cli-commands">CLI — Commands</h2>
+    <table>
+        <tr><th>Command</th><th>Description</th></tr>
+        <tr><td>ipn register</td><td>Create a new account</td></tr>
+        <tr><td>ipn login [username]</td><td>Authenticate and save credentials</td></tr>
+        <tr><td>ipn configure</td><td>Set API key, host, or default domain</td></tr>
+        <tr><td>ipn whoami</td><td>Show current identity</td></tr>
+        <tr><td>ipn update</td><td>Update DNS record (auto-detects IP with --auto)</td></tr>
+        <tr><td>ipn records</td><td>List your DNS records</td></tr>
+        <tr><td>ipn history</td><td>Show IP change history</td></tr>
+        <tr><td>ipn delete &lt;domain&gt;</td><td>Delete a DNS record</td></tr>
+        <tr><td>ipn daemon</td><td>Background auto-update loop</td></tr>
+        <tr><td>ipn status</td><td>Show service and config health</td></tr>
+    </table>
+
+    <!-- CLI DAEMON -->
+    <h2 id="cli-daemon">CLI — Daemon Mode</h2>
+    <p>Run <code>ipn daemon</code> to keep your IP current automatically:</p>
+<pre><span class="c"># update every 5 minutes (default)</span>
+<span class="kw">ipn daemon</span>
+
+<span class="c"># custom interval + include IPv6</span>
+<span class="kw">ipn daemon</span> <span class="fl">--interval 60 --ipv6</span>
+
+<span class="c"># specific domain</span>
+<span class="kw">ipn daemon</span> <span class="fl">--domain myserver</span></pre>
+
+    <!-- CURL EXAMPLES -->
+    <h2 id="ex-curl">Examples — cURL</h2>
+<pre><span class="c"># register</span>
+<span class="kw">curl</span> <span class="fl">-sX POST</span> https://ipn.fyi/api/auth/register \
+  <span class="fl">-H</span> <span class="st">"Content-Type: application/json"</span> \
+  <span class="fl">-d</span> <span class="st">'{"username":"alice","password":"secret123"}'</span>
+
+<span class="c"># update IP (auto-detect with command substitution)</span>
+<span class="kw">curl</span> <span class="fl">-sX POST</span> https://ipn.fyi/api/update \
+  <span class="fl">-H</span> <span class="st">"X-API-Key: $API_KEY"</span> \
+  <span class="fl">-H</span> <span class="st">"Content-Type: application/json"</span> \
+  <span class="fl">-d</span> <span class="st">"{\"domain\":\"alice\",\"ipv4\":\"$(curl -s https://api4.ipify.org)\"}"</span>
+
+<span class="c"># view records</span>
+<span class="kw">curl</span> <span class="fl">-s</span> https://ipn.fyi/api/records <span class="fl">-H</span> <span class="st">"X-API-Key: $API_KEY"</span></pre>
+
+    <!-- SYSTEMD -->
+    <h2 id="ex-systemd">Examples — systemd</h2>
+<pre><span class="c"># /etc/systemd/system/ipn.service</span>
+[Unit]
+Description=ipn.fyi Dynamic DNS updater
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=<span class="kw">ipn</span> daemon <span class="fl">--interval 300</span>
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target</pre>
+<pre><span class="kw">systemctl</span> enable --now ipn</pre>
+
+    <!-- CRON -->
+    <h2 id="ex-cron">Examples — cron</h2>
+<pre><span class="c"># update every 5 minutes via cron</span>
+<span class="fl">*/5 * * * *</span> <span class="kw">ipn</span> update <span class="fl">--auto</span> <span class="fl">>></span> /var/log/ipn.log 2>&1
+
+<span class="c"># or with raw curl</span>
+<span class="fl">*/5 * * * *</span> <span class="kw">curl</span> <span class="fl">-s</span> <span class="st">"https://ipn.fyi/api/update?key=YOUR_KEY&domain=yourname&ipv4=$(curl -s https://api4.ipify.org)"</span></pre>
+</article>
+</div>
+
+<script>
+// Highlight active nav link based on scroll
+const headings = document.querySelectorAll('h2[id]');
+const navLinks  = document.querySelectorAll('nav a');
+const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            navLinks.forEach(l => l.classList.remove('active'));
+            const a = document.querySelector(`nav a[href="#${e.target.id}"]`);
+            if (a) a.classList.add('active');
+        }
+    });
+}, { rootMargin: '-20% 0px -70% 0px' });
+headings.forEach(h => obs.observe(h));
+navLinks.forEach(l => l.addEventListener('click', e => {
+    navLinks.forEach(x => x.classList.remove('active'));
+    l.classList.add('active');
+}));
+</script>
+</body>
+</html>
