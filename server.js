@@ -7,6 +7,7 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs').promises;
 const path = require('path');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const execAsync = promisify(exec);
@@ -144,7 +145,159 @@ ns2 IN A 0.0.0.0
   }
 }
 
-// API Routes
+// ── Password helpers ──────────────────────────────────────────────────────────
+
+function generateSalt() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+function hashPassword(password, salt) {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(password, salt, 100000, 64, 'sha512', (err, key) => {
+      if (err) reject(err);
+      else resolve(key.toString('hex'));
+    });
+  });
+}
+
+function generateApiKey() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+// ── Auth routes ───────────────────────────────────────────────────────────────
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: 'Too many auth attempts, please try again later.'
+});
+
+// POST /api/auth/register
+app.post('/api/auth/register', authLimiter, async (req, res) => {
+  const { username, password, email } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username and password are required' });
+  }
+
+  if (!/^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]?$/i.test(username)) {
+    return res.status(400).json({ error: 'Invalid username. Use letters, numbers, hyphens only.' });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
+
+  try {
+    // Check username taken
+    const existing = await pool.query(
+      'SELECT id FROM users WHERE username = $1', [username.toLowerCase()]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Username already taken.' });
+    }
+
+    const salt     = generateSalt();
+    const hash     = await hashPassword(password, salt);
+    const apiKey   = generateApiKey();
+    const login    = username.toLowerCase();
+
+    await pool.query('BEGIN');
+
+    await pool.query(
+      'INSERT INTO users (username, password_hash, salt, email) VALUES ($1, $2, $3, $4)',
+      [login, hash, salt, email || null]
+    );
+
+    await pool.query(
+      'INSERT INTO api_keys (afterdark_login, api_key) VALUES ($1, $2)',
+      [login, apiKey]
+    );
+
+    await pool.query('COMMIT');
+
+    res.status(201).json({
+      success:  true,
+      username: login,
+      api_key:  apiKey,
+      domain:   `${login}.n.${process.env.BASE_DOMAIN || 'n.ipn.fyi'}`,
+    });
+  } catch (error) {
+    await pool.query('ROLLBACK').catch(() => {});
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Registration failed.' });
+  }
+});
+
+// POST /api/auth/login
+app.post('/api/auth/login', authLimiter, async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'username and password are required' });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT password_hash, salt FROM users WHERE username = $1 AND is_active = true',
+      [username.toLowerCase()]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    const { password_hash, salt } = result.rows[0];
+    const hash = await hashPassword(password, salt);
+
+    if (hash !== password_hash) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+
+    const keyResult = await pool.query(
+      'SELECT api_key FROM api_keys WHERE afterdark_login = $1 AND is_active = true',
+      [username.toLowerCase()]
+    );
+
+    if (keyResult.rows.length === 0) {
+      return res.status(401).json({ error: 'No active API key found. Contact an administrator.' });
+    }
+
+    await pool.query(
+      'UPDATE api_keys SET last_used = NOW() WHERE afterdark_login = $1',
+      [username.toLowerCase()]
+    );
+
+    res.json({
+      success:  true,
+      username: username.toLowerCase(),
+      api_key:  keyResult.rows[0].api_key,
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed.' });
+  }
+});
+
+// GET /api/auth/whoami
+app.get('/api/auth/whoami', authenticateApiKey, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT username, email, created_at FROM users WHERE username = $1',
+      [req.user]
+    );
+    res.json({
+      username:   req.user,
+      email:      result.rows[0]?.email || null,
+      is_admin:   req.isAdmin,
+      created_at: result.rows[0]?.created_at || null,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user info.' });
+  }
+});
+
+// ── API Routes ────────────────────────────────────────────────────────────────
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -33,8 +33,8 @@ RUN mkdir -p /etc/nsd/zones /var/db/nsd /var/run/nsd
 RUN chmod +x ipnfyi-cli.js
 
 # Create non-root user
-RUN addgroup -g 1000 ipnfyi && \
-    adduser -D -u 1000 -G ipnfyi ipnfyi && \
+RUN addgroup -g 1001 ipnfyi && \
+    adduser -D -u 1001 -G ipnfyi ipnfyi && \
     chown -R ipnfyi:ipnfyi /app /etc/nsd /var/db/nsd /var/run/nsd
 
 # Expose ports
